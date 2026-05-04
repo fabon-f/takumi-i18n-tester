@@ -10,9 +10,8 @@ import TakumiWorker from "./takumi.worker.tsx?worker";
 
 export function App() {
   const [text, setText] = useState("Hello World!");
-  const [satoriSvg, setSatoriSvg] = useState<string | null>(null);
-  const [takumiImage, setTakumiImage] = useState<string | null>(null);
-  const [nativeFontReady, setNativeFontReady] = useState(false);
+  const [satoriSvgUrl, setSatoriSvgUrl] = useState<string | null>(null);
+  const [takumiImageUrl, setTakumiImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [fontFile, setFontFile] = useState<File | null>(null);
@@ -56,10 +55,9 @@ export function App() {
       }
       document.fonts.add(fontFace);
       nativeFontFaceRef.current = fontFace;
-      setNativeFontReady(true);
 
       // Render in parallel
-      const [sSvg, tImage] = await Promise.all([
+      const [sSvgUrl, tImageUrl] = await Promise.all([
         satoriApiRef.current.render(text, Comlink.transfer(fontData.slice(0), [fontData.slice(0)])),
         takumiApiRef.current.render(
           text,
@@ -68,8 +66,8 @@ export function App() {
         ),
       ]);
 
-      setSatoriSvg(sSvg);
-      setTakumiImage(tImage);
+      setSatoriSvgUrl(sSvgUrl);
+      setTakumiImageUrl(tImageUrl);
     } catch (err) {
       console.error("Rendering error:", err);
       setError(String(err));
@@ -124,7 +122,7 @@ export function App() {
               height: 400,
               border: "1px solid #ccc",
               background: "white",
-              fontFamily: nativeFontReady ? "CustomNativeFont" : "sans-serif",
+              fontFamily: "CustomNativeFont",
               fontSize: "40px",
               padding: "40px",
               display: "flex",
@@ -135,15 +133,21 @@ export function App() {
               whiteSpace: "pre-wrap",
             }}
           >
-            {nativeFontReady ? text : "Pending..."}
+            {text}
           </div>
         </div>
         <div style={{ flex: 1 }}>
           <h2>Satori (SVG)</h2>
-          {satoriSvg ? (
-            <div
-              style={{ border: "1px solid #ccc", background: "white", width: 600, height: 400 }}
-              dangerouslySetInnerHTML={{ __html: satoriSvg }}
+          {satoriSvgUrl ? (
+            <img
+              src={satoriSvgUrl}
+              style={{
+                width: 600,
+                height: 400,
+                border: "1px solid #ccc",
+                background: "white",
+                display: "block",
+              }}
             />
           ) : (
             <div
@@ -162,9 +166,9 @@ export function App() {
         </div>
         <div style={{ flex: 1 }}>
           <h2>Takumi (PNG)</h2>
-          {takumiImage ? (
+          {takumiImageUrl ? (
             <img
-              src={takumiImage}
+              src={takumiImageUrl}
               alt="Takumi Render"
               style={{ border: "1px solid #ccc", width: 600, height: 400, display: "block" }}
             />

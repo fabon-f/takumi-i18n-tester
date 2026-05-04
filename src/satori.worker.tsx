@@ -36,7 +36,7 @@ const renderer = {
         ],
       },
     );
-    return svg;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
   },
 };
 
