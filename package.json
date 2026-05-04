@@ -1,0 +1,24 @@
+{
+  "name": "takumi-i18n-tester",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsgo -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/web": "^0.0.349",
+    "@typescript/native-preview": "7.0.0-dev.20260503.1",
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.10"
+  },
+  "packageManager": "pnpm@11.0.4"
+}
