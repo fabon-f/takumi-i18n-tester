@@ -12,7 +12,6 @@ export function App() {
   const [text, setText] = useState("Hello World!");
   const [satoriResult, setSatoriResult] = useState<PromiseSettledResult<string> | null>(null);
   const [takumiResult, setTakumiResult] = useState<PromiseSettledResult<string> | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [fontFile, setFontFile] = useState<File | null>(null);
 
@@ -34,45 +33,33 @@ export function App() {
   }, []);
 
   const handleRender = async () => {
-    if (!satoriApiRef.current || !takumiApiRef.current || isRendering) return;
+    if (!satoriApiRef.current || !takumiApiRef.current || isRendering || !fontFile) return;
 
-    if (!fontFile) {
-      setError("Please select a font file (.ttf) first.");
-      return;
-    }
-
-    setError(null);
     setIsRendering(true);
 
-    try {
-      const fontData = await fontFile.arrayBuffer();
+    const fontData = await fontFile.arrayBuffer();
 
-      // Load native font
-      const fontFace = new FontFace("CustomNativeFont", fontData.slice(0));
-      await fontFace.load();
-      if (nativeFontFaceRef.current) {
-        document.fonts.delete(nativeFontFaceRef.current);
-      }
-      document.fonts.add(fontFace);
-      nativeFontFaceRef.current = fontFace;
-
-      // Render in parallel
-      const [satoriResult, takumiResult] = await Promise.allSettled([
-        satoriApiRef.current.render(text, Comlink.transfer(fontData.slice(0), [fontData.slice(0)])),
-        takumiApiRef.current.render(
-          text,
-          Comlink.transfer(fontData, [fontData]),
-          window.devicePixelRatio,
-        ),
-      ]);
-      setSatoriResult(satoriResult);
-      setTakumiResult(takumiResult);
-    } catch (err) {
-      console.error("Rendering error:", err);
-      setError(String(err));
-    } finally {
-      setIsRendering(false);
+    // Load native font
+    const fontFace = new FontFace("CustomNativeFont", fontData.slice(0));
+    await fontFace.load();
+    if (nativeFontFaceRef.current) {
+      document.fonts.delete(nativeFontFaceRef.current);
     }
+    document.fonts.add(fontFace);
+    nativeFontFaceRef.current = fontFace;
+
+    // Render in parallel
+    const [satoriResult, takumiResult] = await Promise.allSettled([
+      satoriApiRef.current.render(text, Comlink.transfer(fontData.slice(0), [fontData.slice(0)])),
+      takumiApiRef.current.render(
+        text,
+        Comlink.transfer(fontData, [fontData]),
+        window.devicePixelRatio,
+      ),
+    ]);
+    setSatoriResult(satoriResult);
+    setTakumiResult(takumiResult);
+    setIsRendering(false);
   };
 
   return (
@@ -94,23 +81,18 @@ export function App() {
             accept=".ttf"
             onChange={(e) => {
               setFontFile(e.target.files?.[0] || null);
-              setError(null);
             }}
           />
         </label>
         <button
           type="button"
           onClick={handleRender}
-          disabled={isRendering}
+          disabled={isRendering || !fontFile}
           style={{ padding: "10px", cursor: "pointer" }}
         >
           {isRendering ? "Rendering..." : "Render All Engines"}
         </button>
       </div>
-
-      {error && (
-        <div style={{ marginTop: "20px", color: "red", fontWeight: "bold" }}>Error: {error}</div>
-      )}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginTop: "20px" }}>
         <div style={{ flex: 1 }}>
@@ -142,7 +124,7 @@ export function App() {
               style={{
                 width: 600,
                 height: 400,
-                border: "1px dashed #ccc",
+                border: "1px solid #ccc",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -166,13 +148,15 @@ export function App() {
               style={{
                 width: 600,
                 height: 400,
-                border: "1px dashed #ccc",
+                border: "1px solid #ccc",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                color: "red",
+                fontWeight: "bold",
               }}
             >
-              Error
+              Error: {satoriResult.reason.message}
             </div>
           )}
         </div>
@@ -183,7 +167,7 @@ export function App() {
               style={{
                 width: 600,
                 height: 400,
-                border: "1px dashed #ccc",
+                border: "1px solid #ccc",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -202,13 +186,15 @@ export function App() {
               style={{
                 width: 600,
                 height: 400,
-                border: "1px dashed #ccc",
+                border: "1px solid #ccc",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                color: "red",
+                fontWeight: "bold",
               }}
             >
-              Error
+              Error: {takumiResult.reason.message}
             </div>
           )}
         </div>
