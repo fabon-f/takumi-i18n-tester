@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 
 import type { Renderer } from "./render.worker.tsx";
 
+import RenderWorker from "./render.worker.tsx?worker";
+
 export function App() {
   const [text, setText] = useState("Hello Satori!");
   const [svg, setSvg] = useState<string | null>(null);
@@ -12,9 +14,7 @@ export function App() {
   const workerApiRef = useRef<Comlink.Remote<Renderer>>(null);
 
   useEffect(() => {
-    const worker = new Worker(new URL("./render.worker.tsx", import.meta.url), {
-      type: "module",
-    });
+    const worker = new RenderWorker();
 
     const workerApi = Comlink.wrap<Renderer>(worker);
     workerApiRef.current = workerApi;
