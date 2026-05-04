@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsgo -b && vite build",
+    "build": "oxlint --report-unused-disable-directives && vite build",
     "preview": "vite preview",
-    "fmt": "oxfmt"
+    "fmt": "oxfmt",
+    "lint": "oxlint --report-unused-disable-directives",
+    "lint:fix": "oxlint --fix"
   },
   "dependencies": {
     "react": "^19.2.5",
@@ -17,9 +19,10 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/web": "^0.0.349",
-    "@typescript/native-preview": "7.0.0-dev.20260503.1",
     "@vitejs/plugin-react": "^6.0.1",
     "oxfmt": "^0.47.0",
+    "oxlint": "^1.62.0",
+    "oxlint-tsgolint": "^0.22.1",
     "vite": "^8.0.10"
   },
   "packageManager": "pnpm@11.0.4"
