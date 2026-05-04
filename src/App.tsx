@@ -10,8 +10,8 @@ import TakumiWorker from "./takumi.worker.tsx?worker";
 
 export function App() {
   const [text, setText] = useState("Hello World!");
-  const [satoriSvgUrl, setSatoriSvgUrl] = useState<string | null>(null);
-  const [takumiImageUrl, setTakumiImageUrl] = useState<string | null>(null);
+  const [satoriResult, setSatoriResult] = useState<PromiseSettledResult<string> | null>(null);
+  const [takumiResult, setTakumiResult] = useState<PromiseSettledResult<string> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [fontFile, setFontFile] = useState<File | null>(null);
@@ -57,7 +57,7 @@ export function App() {
       nativeFontFaceRef.current = fontFace;
 
       // Render in parallel
-      const [sSvgUrl, tImageUrl] = await Promise.all([
+      const [satoriResult, takumiResult] = await Promise.allSettled([
         satoriApiRef.current.render(text, Comlink.transfer(fontData.slice(0), [fontData.slice(0)])),
         takumiApiRef.current.render(
           text,
@@ -65,9 +65,8 @@ export function App() {
           window.devicePixelRatio,
         ),
       ]);
-
-      setSatoriSvgUrl(sSvgUrl);
-      setTakumiImageUrl(tImageUrl);
+      setSatoriResult(satoriResult);
+      setTakumiResult(takumiResult);
     } catch (err) {
       console.error("Rendering error:", err);
       setError(String(err));
@@ -138,9 +137,22 @@ export function App() {
         </div>
         <div style={{ flex: 1 }}>
           <h2>Satori (SVG)</h2>
-          {satoriSvgUrl ? (
+          {satoriResult === null ? (
+            <div
+              style={{
+                width: 600,
+                height: 400,
+                border: "1px dashed #ccc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Pending...
+            </div>
+          ) : satoriResult.status === "fulfilled" ? (
             <img
-              src={satoriSvgUrl}
+              src={satoriResult.value}
               style={{
                 width: 600,
                 height: 400,
@@ -160,15 +172,28 @@ export function App() {
                 justifyContent: "center",
               }}
             >
-              Pending...
+              Error
             </div>
           )}
         </div>
         <div style={{ flex: 1 }}>
           <h2>Takumi (PNG)</h2>
-          {takumiImageUrl ? (
+          {takumiResult === null ? (
+            <div
+              style={{
+                width: 600,
+                height: 400,
+                border: "1px dashed #ccc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Pending...
+            </div>
+          ) : takumiResult.status === "fulfilled" ? (
             <img
-              src={takumiImageUrl}
+              src={takumiResult.value}
               alt="Takumi Render"
               style={{ border: "1px solid #ccc", width: 600, height: 400, display: "block" }}
             />
@@ -183,7 +208,7 @@ export function App() {
                 justifyContent: "center",
               }}
             >
-              Pending...
+              Error
             </div>
           )}
         </div>
