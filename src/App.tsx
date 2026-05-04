@@ -78,7 +78,7 @@ export function App() {
           Custom Font (required .ttf):
           <input
             type="file"
-            accept=".ttf"
+            accept="font/*"
             onChange={(e) => {
               setFontFile(e.target.files?.[0] || null);
             }}
