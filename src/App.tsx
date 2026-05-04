@@ -1,3 +1,4 @@
+import "./assets/global.css";
 import * as Comlink from "comlink";
 import { useState, useRef, useEffect } from "react";
 
@@ -11,12 +12,14 @@ export function App() {
   const [text, setText] = useState("Hello World!");
   const [satoriSvg, setSatoriSvg] = useState<string | null>(null);
   const [takumiImage, setTakumiImage] = useState<string | null>(null);
+  const [nativeFontReady, setNativeFontReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [fontFile, setFontFile] = useState<File | null>(null);
 
   const satoriApiRef = useRef<Comlink.Remote<SatoriRenderer>>(null);
   const takumiApiRef = useRef<Comlink.Remote<TakumiRenderer>>(null);
+  const nativeFontFaceRef = useRef<FontFace | null>(null);
 
   useEffect(() => {
     const sWorker = new SatoriWorker();
@@ -44,6 +47,16 @@ export function App() {
 
     try {
       const fontData = await fontFile.arrayBuffer();
+
+      // Load native font
+      const fontFace = new FontFace("CustomNativeFont", fontData.slice(0));
+      await fontFace.load();
+      if (nativeFontFaceRef.current) {
+        document.fonts.delete(nativeFontFaceRef.current);
+      }
+      document.fonts.add(fontFace);
+      nativeFontFaceRef.current = fontFace;
+      setNativeFontReady(true);
 
       // Render in parallel
       const [sSvg, tImage] = await Promise.all([
@@ -94,7 +107,7 @@ export function App() {
           disabled={isRendering}
           style={{ padding: "10px", cursor: "pointer" }}
         >
-          {isRendering ? "Rendering..." : "Render Both Engines"}
+          {isRendering ? "Rendering..." : "Render All Engines"}
         </button>
       </div>
 
@@ -102,18 +115,41 @@ export function App() {
         <div style={{ marginTop: "20px", color: "red", fontWeight: "bold" }}>Error: {error}</div>
       )}
 
-      <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginTop: "20px" }}>
+        <div style={{ flex: 1 }}>
+          <h2>Browser Native</h2>
+          <div
+            style={{
+              width: 600,
+              height: 400,
+              border: "1px solid #ccc",
+              background: "white",
+              fontFamily: nativeFontReady ? "CustomNativeFont" : "sans-serif",
+              fontSize: "40px",
+              padding: "40px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              overflow: "hidden",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {nativeFontReady ? text : "Pending..."}
+          </div>
+        </div>
         <div style={{ flex: 1 }}>
           <h2>Satori (SVG)</h2>
           {satoriSvg ? (
             <div
-              style={{ border: "1px solid #ccc", background: "white" }}
+              style={{ border: "1px solid #ccc", background: "white", width: 600, height: 400 }}
               dangerouslySetInnerHTML={{ __html: satoriSvg }}
             />
           ) : (
             <div
               style={{
-                height: "400px",
+                width: 600,
+                height: 400,
                 border: "1px dashed #ccc",
                 display: "flex",
                 alignItems: "center",
@@ -135,7 +171,8 @@ export function App() {
           ) : (
             <div
               style={{
-                height: "400px",
+                width: 600,
+                height: 400,
                 border: "1px dashed #ccc",
                 display: "flex",
                 alignItems: "center",
