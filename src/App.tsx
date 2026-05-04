@@ -1,35 +1,41 @@
 import * as Comlink from "comlink";
 import { useState, useRef, useEffect } from "react";
 
-import type { Renderer } from "./render.worker.tsx";
+import type { Renderer as SatoriRenderer } from "./satori.worker.tsx";
+import type { TakumiRenderer } from "./takumi.worker.tsx";
 
-import RenderWorker from "./render.worker.tsx?worker";
+import SatoriWorker from "./satori.worker.tsx?worker";
+import TakumiWorker from "./takumi.worker.tsx?worker";
 
 export function App() {
-  const [text, setText] = useState("Hello Satori!");
-  const [svg, setSvg] = useState<string | null>(null);
+  const [text, setText] = useState("Hello World!");
+  const [satoriSvg, setSatoriSvg] = useState<string | null>(null);
+  const [takumiImage, setTakumiImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [fontFile, setFontFile] = useState<File | null>(null);
-  const workerApiRef = useRef<Comlink.Remote<Renderer>>(null);
+
+  const satoriApiRef = useRef<Comlink.Remote<SatoriRenderer>>(null);
+  const takumiApiRef = useRef<Comlink.Remote<TakumiRenderer>>(null);
 
   useEffect(() => {
-    const worker = new RenderWorker();
+    const sWorker = new SatoriWorker();
+    const tWorker = new TakumiWorker();
 
-    const workerApi = Comlink.wrap<Renderer>(worker);
-    workerApiRef.current = workerApi;
+    satoriApiRef.current = Comlink.wrap<SatoriRenderer>(sWorker);
+    takumiApiRef.current = Comlink.wrap<TakumiRenderer>(tWorker);
 
     return () => {
-      worker.terminate();
+      sWorker.terminate();
+      tWorker.terminate();
     };
   }, []);
 
   const handleRender = async () => {
-    if (!workerApiRef.current || isRendering) return;
+    if (!satoriApiRef.current || !takumiApiRef.current || isRendering) return;
 
     if (!fontFile) {
       setError("Please select a font file (.ttf) first.");
-      setSvg(null);
       return;
     }
 
@@ -38,15 +44,22 @@ export function App() {
 
     try {
       const fontData = await fontFile.arrayBuffer();
-      const renderedSvg = await workerApiRef.current.render(
-        text,
-        Comlink.transfer(fontData, [fontData]),
-      );
-      setSvg(renderedSvg);
+
+      // Render in parallel
+      const [sSvg, tImage] = await Promise.all([
+        satoriApiRef.current.render(text, Comlink.transfer(fontData.slice(0), [fontData.slice(0)])),
+        takumiApiRef.current.render(
+          text,
+          Comlink.transfer(fontData, [fontData]),
+          window.devicePixelRatio,
+        ),
+      ]);
+
+      setSatoriSvg(sSvg);
+      setTakumiImage(tImage);
     } catch (err) {
       console.error("Rendering error:", err);
       setError(String(err));
-      setSvg(null);
     } finally {
       setIsRendering(false);
     }
@@ -54,7 +67,7 @@ export function App() {
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h1>Satori Text to Image</h1>
+      <h1>Text Renderer Tester</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "600px" }}>
         <label style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
           Text:
@@ -81,7 +94,7 @@ export function App() {
           disabled={isRendering}
           style={{ padding: "10px", cursor: "pointer" }}
         >
-          {isRendering ? "Rendering..." : "Render to Image"}
+          {isRendering ? "Rendering..." : "Render Both Engines"}
         </button>
       </div>
 
@@ -89,16 +102,50 @@ export function App() {
         <div style={{ marginTop: "20px", color: "red", fontWeight: "bold" }}>Error: {error}</div>
       )}
 
-      <div style={{ marginTop: "20px" }}>
-        <h2>Output:</h2>
-        {svg ? (
-          <div
-            style={{ border: "1px solid #ccc", display: "inline-block" }}
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-        ) : (
-          <p>No image rendered yet.</p>
-        )}
+      <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
+        <div style={{ flex: 1 }}>
+          <h2>Satori (SVG)</h2>
+          {satoriSvg ? (
+            <div
+              style={{ border: "1px solid #ccc", background: "white" }}
+              dangerouslySetInnerHTML={{ __html: satoriSvg }}
+            />
+          ) : (
+            <div
+              style={{
+                height: "400px",
+                border: "1px dashed #ccc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Pending...
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1 }}>
+          <h2>Takumi (PNG)</h2>
+          {takumiImage ? (
+            <img
+              src={takumiImage}
+              alt="Takumi Render"
+              style={{ border: "1px solid #ccc", width: 600, height: 400, display: "block" }}
+            />
+          ) : (
+            <div
+              style={{
+                height: "400px",
+                border: "1px dashed #ccc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Pending...
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
