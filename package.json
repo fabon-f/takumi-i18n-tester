@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsgo -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fmt": "oxfmt"
   },
   "dependencies": {
     "react": "^19.2.5",
@@ -18,6 +19,7 @@
     "@types/web": "^0.0.349",
     "@typescript/native-preview": "7.0.0-dev.20260503.1",
     "@vitejs/plugin-react": "^6.0.1",
+    "oxfmt": "^0.47.0",
     "vite": "^8.0.10"
   },
   "packageManager": "pnpm@11.0.4"
