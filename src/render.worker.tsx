@@ -1,24 +1,24 @@
-import satori from 'satori';
+import * as Comlink from "comlink";
+import satori from "satori";
 
-onmessage = async (e: MessageEvent<{ text: string; fontData?: ArrayBuffer }>) => {
-  const { text, fontData } = e.data;
-  try {
+const renderer = {
+  async render(text: string, fontData: ArrayBuffer): Promise<string> {
     if (!fontData) {
-      throw new Error('Font data is required.');
+      throw new Error("Font data is required.");
     }
 
     const svg = await satori(
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           fontSize: 40,
-          color: 'black',
-          backgroundColor: 'white',
-          width: '100%',
-          height: '100%',
+          color: "black",
+          backgroundColor: "white",
+          width: "100%",
+          height: "100%",
           padding: 40,
-          justifyContent: 'center',
-          alignItems: 'center',
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
         {text}
@@ -28,16 +28,18 @@ onmessage = async (e: MessageEvent<{ text: string; fontData?: ArrayBuffer }>) =>
         height: 400,
         fonts: [
           {
-            name: 'CustomFont',
+            name: "CustomFont",
             data: fontData,
             weight: 400,
-            style: 'normal',
+            style: "normal",
           },
         ],
-      }
+      },
     );
-    postMessage({ type: 'success', svg });
-  } catch (error) {
-    postMessage({ type: 'error', error: String(error) });
-  }
+    return svg;
+  },
 };
+
+export type Renderer = typeof renderer;
+
+Comlink.expose(renderer);

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      comlink:
+        specifier: ^4.4.2
+        version: 4.4.2
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -485,6 +488,9 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  comlink@4.4.2:
+    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
 
   css-background-parser@0.1.0:
     resolution: {integrity: sha512-2EZLisiZQ+7m4wwur/qiYJRniHX4K5Tc9w93MT3AS0WS1u5kaZ4FKXlOTBhOjc+CgEgPiGY+fX1yWD8UwpEqUA==}
@@ -999,6 +1005,8 @@ snapshots:
   camelize@1.0.1: {}
 
   color-name@1.1.4: {}
+
+  comlink@4.4.2: {}
 
   css-background-parser@0.1.0: {}
 
