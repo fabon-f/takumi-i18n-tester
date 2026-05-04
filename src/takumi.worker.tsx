@@ -42,8 +42,8 @@ const takumiRenderer = {
     );
 
     const outputBuffer = renderer.render(node, {
-      width: 600 * devicePixelRatio,
-      height: 400 * devicePixelRatio,
+      width: Math.floor(600 * devicePixelRatio),
+      height: Math.floor(400 * devicePixelRatio),
       devicePixelRatio,
       format: "png",
       stylesheets,
